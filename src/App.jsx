@@ -750,7 +750,7 @@ export default function ExpenseTracker() {
                                         </button>
                                       </div>
                                     ):(
-                                      <buttonw
+                                      <button
                                         className="del-btn"
                                         onClick={() => setDeleteId(e.id)}
                                         style={{
