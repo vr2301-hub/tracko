@@ -602,11 +602,15 @@ export default function ExpenseTracker() {
           </div>
 
           {/* Note */}
-          <div style={{marginBottom:14}}>
+          <div style={{ marginBottom: 14 }}>
             <SL>Note</SL>
-            <IB type="text" placeholder="What was this for?" value={form.note}
-              onChange={e=>setForm(f=>({...f,note:e.target.value}))}
-              onKeyDown={e=>e.key==="Enter"&&saveExpense()}          
+            <IB
+              type="text"
+              placeholder="What was this for?"
+              value={form.note}
+              onChange={e => setForm(f => ({ ...f, note: e.target.value }))}
+              onKeyDown={e => e.key === "Enter" && saveExpense()}
+            />
           </div>
 
           {/* Date */}
