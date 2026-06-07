@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+//import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // THEME / FONT / ACCENT SYSTEM
@@ -412,17 +413,64 @@ export default function ExpenseTracker() {
   );
 
   // Filled input
-  const IB = ({style={}, ...p}) => (
-    <input {...p} style={{background:T.surfaceUp,border:`2px solid ${T.border}`,borderRadius:12,padding:"12px 16px",width:"100%",color:T.text,fontSize:14,fontFamily:F.family,transition:"border-color .15s",...style}}
-      onFocus={e=>e.target.style.borderColor=accent}
-      onBlur={e=>e.target.style.borderColor=T.border}/>
-  );
+
+        const IB = useCallback(
+          ({ style = {}, ...p }) => (
+            <input
+              {...p}
+              style={{
+                background: T.surfaceUp,
+                border: `2px solid ${T.border}`,
+                borderRadius: 12,
+                padding: "12px 16px",
+                width: "100%",
+                color: T.text,
+                fontSize: 14,
+                fontFamily: F.family,
+                transition: "border-color .15s",
+                ...style,
+              }}
+              onFocus={e => {
+                e.target.style.borderColor = accent;
+                p.onFocus?.(e);
+              }}
+              onBlur={e => {
+                e.target.style.borderColor = T.border;
+                p.onBlur?.(e);
+              }}
+            />
+          ),
+          [T.surfaceUp, T.border, T.text, F.family, accent]
+        );
+
 
   // Filled select
-  const SB = ({children,style={},...p}) => (
-    <select {...p} style={{background:T.surfaceUp,border:`2px solid ${T.border}`,borderRadius:12,padding:"12px 16px",width:"100%",color:T.text,fontSize:14,fontFamily:F.family,colorScheme:T.dark?"dark":"light",appearance:"none",backgroundImage:`url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpolyline points='6,9 12,15 18,9'/%3E%3C/svg%3E")`,backgroundRepeat:"no-repeat",backgroundPosition:"right 14px center",...style}}>
-      {children}
-    </select>
+  const SB = useCallback(
+    ({ children, style = {}, ...p }) => (
+      <select
+        {...p}
+        style={{
+          background: T.surfaceUp,
+          border: `2px solid ${T.border}`,
+          borderRadius: 12,
+          padding: "12px 16px",
+          width: "100%",
+          color: T.text,
+          fontSize: 14,
+          fontFamily: F.family,
+          colorScheme: T.dark ? "dark" : "light",
+          appearance: "none",
+          backgroundImage:
+            `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpolyline points='6,9 12,15 18,9'/%3E%3C/svg%3E")`,
+          backgroundRepeat: "no-repeat",
+          backgroundPosition: "right 14px center",
+          ...style,
+        }}
+      >
+        {children}
+      </select>
+    ),
+    [T.surfaceUp, T.border, T.text, T.dark, F.family]
   );
 
   // Card
