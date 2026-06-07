@@ -338,7 +338,7 @@ export default function ExpenseTracker() {
       {categories.map(c=>(
         <button key={c.id} onClick={()=>onChange(c.id)}
           style={{display:"flex",alignItems:"center",gap:6,padding:"9px 14px",background:value===c.id?c.color:T.surfaceUp,border:`2px solid ${value===c.id?c.color:T.border}`,borderRadius:12,cursor:"pointer",fontFamily:F.family,fontSize:12,fontWeight:value===c.id?600:400,color:value===c.id?"#fff":T.textSub,transition:"all .15s"}}>
-          <span style={{fontSize:15}}>{c.icon}</span>{c.label}
+          <span style={{fontSize:22}}>{c.icon}</span>{c.label}
         </button>
       ))}
     </div>
@@ -350,7 +350,7 @@ export default function ExpenseTracker() {
       {accounts.map(a=>(
         <button key={a.id} onClick={()=>onChange(a.id)}
           style={{display:"flex",alignItems:"center",gap:6,padding:"9px 14px",background:value===a.id?a.color:T.surfaceUp,border:`2px solid ${value===a.id?a.color:T.border}`,borderRadius:12,cursor:"pointer",fontFamily:F.family,fontSize:12,fontWeight:value===a.id?600:400,color:value===a.id?"#fff":T.textSub,transition:"all .15s"}}>
-          <span style={{fontSize:15}}>{a.icon}</span>{a.name}
+          <span style={{fontSize:22}}>{a.icon}</span>{a.name}
         </button>
       ))}
     </div>
@@ -514,7 +514,7 @@ export default function ExpenseTracker() {
                 return (
                   <div key={e.id} className="entry-row" style={{display:"flex",alignItems:"center",padding:"14px 20px",gap:14}}>
                     {/* Icon bubble */}
-                    <div style={{width:42,height:42,borderRadius:13,background:hexAlpha(cat.color,.15),display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>
+                    <div style={{width:50,height:50,borderRadius:15,background:hexAlpha(cat.color,.15),display:"flex",alignItems:"center",justifyContent:"center",fontSize:26,flexShrink:0}}>
                       {cat.icon}
                     </div>
                     <div style={{flex:1,minWidth:0}}>
@@ -585,7 +585,7 @@ export default function ExpenseTracker() {
                 <div key={c.id} style={{marginBottom:18}}>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:7}}>
                     <div style={{display:"flex",alignItems:"center",gap:8}}>
-                      <div style={{width:32,height:32,borderRadius:10,background:hexAlpha(c.color,.18),display:"flex",alignItems:"center",justifyContent:"center",fontSize:16}}>{c.icon}</div>
+                      <div style={{width:42,height:42,borderRadius:12,background:hexAlpha(c.color,.18),display:"flex",alignItems:"center",justifyContent:"center",fontSize:24}}>{c.icon}</div>
                       <span style={{fontSize:13,fontWeight:500,color:T.text}}>{c.label}</span>
                     </div>
                     <div style={{textAlign:"right"}}>
@@ -612,7 +612,7 @@ export default function ExpenseTracker() {
               {accTotals.map(a=>(
                 <div key={a.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 0",borderBottom:`1px solid ${T.border}`}}>
                   <div style={{display:"flex",alignItems:"center",gap:10}}>
-                    <div style={{width:36,height:36,borderRadius:10,background:hexAlpha(a.color,.18),display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>{a.icon}</div>
+                    <div style={{width:44,height:44,borderRadius:12,background:hexAlpha(a.color,.18),display:"flex",alignItems:"center",justifyContent:"center",fontSize:24}}>{a.icon}</div>
                     <span style={{fontSize:13,fontWeight:500,color:T.text}}>{a.name}</span>
                   </div>
                   <span style={{fontSize:14,fontWeight:700,color:a.color}}>{fmt(a.total)}</span>
@@ -687,7 +687,7 @@ export default function ExpenseTracker() {
             <SectionRow label="Accounts" action="+ Add" onAction={()=>setView("addAccount")}/>
             {accounts.map((a,i)=>(
               <div key={a.id} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 0",borderTop:i>0?`1px solid ${T.border}`:"none"}}>
-                <div style={{width:36,height:36,borderRadius:10,background:hexAlpha(a.color,.18),display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>{a.icon}</div>
+                <div style={{width:44,height:44,borderRadius:12,background:hexAlpha(a.color,.18),display:"flex",alignItems:"center",justifyContent:"center",fontSize:24}}>{a.icon}</div>
                 <span style={{flex:1,fontSize:13,fontWeight:500,color:T.text}}>{a.name}</span>
                 <button onClick={()=>setAccounts(prev=>prev.filter(x=>x.id!==a.id))}
                   style={{background:hexAlpha("#E11D48",.12),border:"none",borderRadius:8,padding:"6px 10px",color:"#E11D48",fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:F.family}}>Remove</button>
@@ -701,7 +701,7 @@ export default function ExpenseTracker() {
             <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
               {categories.map(c=>(
                 <div key={c.id} style={{display:"flex",alignItems:"center",gap:6,background:hexAlpha(c.color,.15),border:`1.5px solid ${hexAlpha(c.color,.3)}`,borderRadius:10,padding:"7px 12px"}}>
-                  <span style={{fontSize:14}}>{c.icon}</span>
+                  <span style={{fontSize:20}}>{c.icon}</span>
                   <span style={{fontSize:12,fontWeight:500,color:c.color}}>{c.label}</span>
                   {!c.isDefault&&<button onClick={()=>setCategories(prev=>prev.filter(x=>x.id!==c.id))}
                     style={{background:"none",border:"none",cursor:"pointer",color:T.textMuted,fontSize:13,padding:0,marginLeft:2,lineHeight:1}}>✕</button>}
@@ -721,7 +721,7 @@ export default function ExpenseTracker() {
               return (
                 <div key={r.id} style={{padding:"12px 0",borderTop:i>0?`1px solid ${T.border}`:"none"}}>
                   <div style={{display:"flex",alignItems:"flex-start",gap:12}}>
-                    <div style={{width:40,height:40,borderRadius:12,background:hexAlpha(cat.color,.18),display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>{cat.icon}</div>
+                    <div style={{width:48,height:48,borderRadius:14,background:hexAlpha(cat.color,.18),display:"flex",alignItems:"center",justifyContent:"center",fontSize:26,flexShrink:0}}>{cat.icon}</div>
                     <div style={{flex:1,minWidth:0}}>
                       <div style={{fontSize:13,fontWeight:600,color:T.text,marginBottom:3}}>{r.name}</div>
                       <div style={{fontSize:11,color:T.textMuted,fontWeight:500}}>{RECUR_FREQ.find(f=>f.id===r.freq)?.label} · {acc?.icon} {acc?.name??"—"}</div>
@@ -850,7 +850,7 @@ export default function ExpenseTracker() {
             <SL>Per Category</SL>
             {categories.map((c,i)=>(
               <div key={c.id} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 0",borderTop:i>0?`1px solid ${T.border}`:"none"}}>
-                <div style={{width:36,height:36,borderRadius:10,background:hexAlpha(c.color,.18),display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>{c.icon}</div>
+                <div style={{width:44,height:44,borderRadius:12,background:hexAlpha(c.color,.18),display:"flex",alignItems:"center",justifyContent:"center",fontSize:24}}>{c.icon}</div>
                 <span style={{fontSize:13,fontWeight:500,flex:1,color:T.text}}>{c.label}</span>
                 <IB type="number" className="num-input" placeholder="—" value={budgetDraft.byCategory[c.id]??""} onChange={e=>setBudgetDraft(b=>({...b,byCategory:{...b.byCategory,[c.id]:e.target.value}}))} style={{width:110,textAlign:"right",padding:"9px 12px"}}/>
               </div>
@@ -895,7 +895,7 @@ export default function ExpenseTracker() {
               </div>
             </div>
             <div style={{background:T.surfaceUp,borderRadius:12,padding:"12px 16px",display:"flex",alignItems:"center",gap:10}}>
-              <div style={{width:36,height:36,borderRadius:10,background:hexAlpha(catForm.color,.2),display:"flex",alignItems:"center",justifyContent:"center",fontSize:20}}>{catForm.icon||"📌"}</div>
+              <div style={{width:44,height:44,borderRadius:12,background:hexAlpha(catForm.color,.2),display:"flex",alignItems:"center",justifyContent:"center",fontSize:26}}>{catForm.icon||"📌"}</div>
               <span style={{fontSize:14,fontWeight:600,color:catForm.color}}>{catForm.label||"Preview"}</span>
             </div>
           </Card>
