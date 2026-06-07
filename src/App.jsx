@@ -383,140 +383,334 @@ export default function ExpenseTracker() {
 
   // ── Shared UI Atoms ───────────────────────────────────────────────────────
 
-  // Section label
-  const SL = ({children,style={}}) => (
-    <div style={{fontSize:11,fontWeight:600,color:T.textMuted,textTransform:"uppercase",letterSpacing:2,marginBottom:10,fontFamily:F.family,...style}}>{children}</div>
+ // ── Shared UI Atoms ───────────────────────────────────────────────────────
+
+const {
+  SL,
+  PrimaryBtn,
+  SolidBtn,
+  Tag,
+  IB,
+  SB,
+  Card,
+  BRow,
+  SectionRow,
+  CatGrid,
+  AccGrid,
+} = useMemo(() => {
+  const SL = ({ children, style = {} }) => (
+    <div
+      style={{
+        fontSize: 11,
+        fontWeight: 600,
+        color: T.textMuted,
+        textTransform: "uppercase",
+        letterSpacing: 2,
+        marginBottom: 10,
+        fontFamily: F.family,
+        ...style,
+      }}
+    >
+      {children}
+    </div>
   );
 
-  // Solid filled primary button
-  const PrimaryBtn = ({label,onClick,disabled,icon,style={}}) => (
-    <button onClick={onClick} disabled={disabled}
-      style={{width:"100%",padding:"15px 20px",background:disabled?T.surfaceUp:accent,border:"none",borderRadius:14,color:disabled?T.textMuted:accentText,fontSize:14,fontWeight:600,cursor:disabled?"default":"pointer",fontFamily:F.family,transition:"all .15s",display:"flex",alignItems:"center",justifyContent:"center",gap:8,boxShadow:disabled?"none":`0 4px 16px ${hexAlpha(accent,.35)}`,letterSpacing:0.3,...style}}>
-      {icon&&<span style={{fontSize:16}}>{icon}</span>}{label}
-    </button>
-  );
-
-  // Solid filled secondary button (smaller)
-  const SolidBtn = ({label,onClick,color,textColor="#fff",style={}}) => (
-    <button onClick={onClick}
-      style={{padding:"8px 16px",background:color,border:"none",borderRadius:10,color:textColor,fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:F.family,transition:"all .15s",letterSpacing:0.2,boxShadow:`0 2px 8px ${hexAlpha(color,.3)}`,...style}}>
+  const PrimaryBtn = ({ label, onClick, disabled, icon, style = {} }) => (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      style={{
+        width: "100%",
+        padding: "15px 20px",
+        background: disabled ? T.surfaceUp : accent,
+        border: "none",
+        borderRadius: 14,
+        color: disabled ? T.textMuted : accentText,
+        fontSize: 14,
+        fontWeight: 600,
+        cursor: disabled ? "default" : "pointer",
+        fontFamily: F.family,
+        transition: "all .15s",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 8,
+        boxShadow: disabled ? "none" : `0 4px 16px ${hexAlpha(accent, 0.35)}`,
+        letterSpacing: 0.3,
+        ...style,
+      }}
+    >
+      {icon && <span style={{ fontSize: 16 }}>{icon}</span>}
       {label}
     </button>
   );
 
-  // Solid filled tag/chip (no outline, filled bg)
-  const Tag = ({active,color,children,onClick,style={}}) => (
-    <button onClick={onClick}
-      style={{padding:"8px 14px",background:active?color:T.surfaceUp,border:"none",borderRadius:10,color:active?("#fff"):T.textSub,fontSize:12,fontWeight:active?600:400,cursor:"pointer",fontFamily:F.family,transition:"all .15s",whiteSpace:"nowrap",...style}}>
+  const SolidBtn = ({
+    label,
+    onClick,
+    color,
+    textColor = "#fff",
+    style = {},
+  }) => (
+    <button
+      onClick={onClick}
+      style={{
+        padding: "8px 16px",
+        background: color,
+        border: "none",
+        borderRadius: 10,
+        color: textColor,
+        fontSize: 12,
+        fontWeight: 600,
+        cursor: "pointer",
+        fontFamily: F.family,
+        transition: "all .15s",
+        letterSpacing: 0.2,
+        boxShadow: `0 2px 8px ${hexAlpha(color, 0.3)}`,
+        ...style,
+      }}
+    >
+      {label}
+    </button>
+  );
+
+  const Tag = ({ active, color, children, onClick, style = {} }) => (
+    <button
+      onClick={onClick}
+      style={{
+        padding: "8px 14px",
+        background: active ? color : T.surfaceUp,
+        border: "none",
+        borderRadius: 10,
+        color: active ? "#fff" : T.textSub,
+        fontSize: 12,
+        fontWeight: active ? 600 : 400,
+        cursor: "pointer",
+        fontFamily: F.family,
+        transition: "all .15s",
+        whiteSpace: "nowrap",
+        ...style,
+      }}
+    >
       {children}
     </button>
   );
 
-  // Filled input
+  const IB = ({ style = {}, onFocus, onBlur, ...p }) => (
+    <input
+      {...p}
+      style={{
+        background: T.surfaceUp,
+        border: `2px solid ${T.border}`,
+        borderRadius: 12,
+        padding: "12px 16px",
+        width: "100%",
+        color: T.text,
+        fontSize: 14,
+        fontFamily: F.family,
+        transition: "border-color .15s",
+        ...style,
+      }}
+      onFocus={e => {
+        e.target.style.borderColor = accent;
+        onFocus?.(e);
+      }}
+      onBlur={e => {
+        e.target.style.borderColor = T.border;
+        onBlur?.(e);
+      }}
+    />
+  );
 
-        const IB = useCallback(
-          ({ style = {}, ...p }) => (
-            <input
-              {...p}
-              style={{
-                background: T.surfaceUp,
-                border: `2px solid ${T.border}`,
-                borderRadius: 12,
-                padding: "12px 16px",
-                width: "100%",
-                color: T.text,
-                fontSize: 14,
-                fontFamily: F.family,
-                transition: "border-color .15s",
-                ...style,
-              }}
-              onFocus={e => {
-                e.target.style.borderColor = accent;
-                p.onFocus?.(e);
-              }}
-              onBlur={e => {
-                e.target.style.borderColor = T.border;
-                p.onBlur?.(e);
-              }}
-            />
-          ),
-          [T.surfaceUp, T.border, T.text, F.family, accent]
-        );
+  const SB = ({ children, style = {}, ...p }) => (
+    <select
+      {...p}
+      style={{
+        background: T.surfaceUp,
+        border: `2px solid ${T.border}`,
+        borderRadius: 12,
+        padding: "12px 16px",
+        width: "100%",
+        color: T.text,
+        fontSize: 14,
+        fontFamily: F.family,
+        colorScheme: T.dark ? "dark" : "light",
+        appearance: "none",
+        backgroundImage:
+          `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpolyline points='6,9 12,15 18,9'/%3E%3C/svg%3E")`,
+        backgroundRepeat: "no-repeat",
+        backgroundPosition: "right 14px center",
+        ...style,
+      }}
+    >
+      {children}
+    </select>
+  );
 
+  const Card = ({ children, style = {} }) => (
+    <div
+      style={{
+        background: T.surface,
+        borderRadius: 16,
+        padding: "16px",
+        border: `1px solid ${T.border}`,
+        boxShadow: T.dark
+          ? "0 2px 12px rgba(0,0,0,0.2)"
+          : "0 2px 12px rgba(0,0,0,0.06)",
+        ...style,
+      }}
+    >
+      {children}
+    </div>
+  );
 
-  // Filled select
-  const SB = useCallback(
-    ({ children, style = {}, ...p }) => (
-      <select
-        {...p}
+  const BRow = ({ label, onBack }) => (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        marginBottom: 24,
+        gap: 12,
+      }}
+    >
+      <button
+        onClick={onBack}
         style={{
+          width: 36,
+          height: 36,
+          borderRadius: 10,
           background: T.surfaceUp,
-          border: `2px solid ${T.border}`,
-          borderRadius: 12,
-          padding: "12px 16px",
-          width: "100%",
+          border: "none",
+          cursor: "pointer",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontSize: 18,
           color: T.text,
-          fontSize: 14,
-          fontFamily: F.family,
-          colorScheme: T.dark ? "dark" : "light",
-          appearance: "none",
-          backgroundImage:
-            `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpolyline points='6,9 12,15 18,9'/%3E%3C/svg%3E")`,
-          backgroundRepeat: "no-repeat",
-          backgroundPosition: "right 14px center",
-          ...style,
         }}
       >
-        {children}
-      </select>
-    ),
-    [T.surfaceUp, T.border, T.text, T.dark, F.family]
-  );
+        ←
+      </button>
 
-  // Card
-  const Card = ({children,style={}}) => (
-    <div style={{background:T.surface,borderRadius:16,padding:"16px",border:`1px solid ${T.border}`,boxShadow:T.dark?"0 2px 12px rgba(0,0,0,0.2)":"0 2px 12px rgba(0,0,0,0.06)",...style}}>{children}</div>
-  );
-
-  // Back row
-  const BRow = ({label,onBack}) => (
-    <div style={{display:"flex",alignItems:"center",marginBottom:24,gap:12}}>
-      <button onClick={onBack} style={{width:36,height:36,borderRadius:10,background:T.surfaceUp,border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,color:T.text}}>←</button>
-      <span style={{fontSize:16,fontWeight:700,color:T.text,fontFamily:F.family}}>{label}</span>
+      <span
+        style={{
+          fontSize: 16,
+          fontWeight: 700,
+          color: T.text,
+          fontFamily: F.family,
+        }}
+      >
+        {label}
+      </span>
     </div>
   );
 
-  // Section header row with action
-  const SectionRow = ({label,action,onAction}) => (
-    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
-      <SL style={{marginBottom:0}}>{label}</SL>
-      {action&&<SolidBtn label={action} onClick={onAction} color={accent} style={{padding:"6px 14px",fontSize:11,boxShadow:"none"}}/>}
+  const SectionRow = ({ label, action, onAction }) => (
+    <div
+      style={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginBottom: 12,
+      }}
+    >
+      <SL style={{ marginBottom: 0 }}>{label}</SL>
+
+      {action && (
+        <SolidBtn
+          label={action}
+          onClick={onAction}
+          color={accent}
+          style={{
+            padding: "6px 14px",
+            fontSize: 11,
+            boxShadow: "none",
+          }}
+        />
+      )}
     </div>
   );
 
-  // Category toggle grid
-  const CatGrid = ({value,onChange}) => (
-    <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
-      {categories.map(c=>(
-        <button key={c.id} onClick={()=>onChange(c.id)}
-          style={{display:"flex",alignItems:"center",gap:6,padding:"9px 14px",background:value===c.id?c.color:T.surfaceUp,border:`2px solid ${value===c.id?c.color:T.border}`,borderRadius:12,cursor:"pointer",fontFamily:F.family,fontSize:12,fontWeight:value===c.id?600:400,color:value===c.id?"#fff":T.textSub,transition:"all .15s"}}>
-          <span style={{fontSize:22}}>{c.icon}</span>{c.label}
+  const CatGrid = ({ value, onChange }) => (
+    <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+      {categories.map(c => (
+        <button
+          key={c.id}
+          onClick={() => onChange(c.id)}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+            padding: "9px 14px",
+            background: value === c.id ? c.color : T.surfaceUp,
+            border: `2px solid ${value === c.id ? c.color : T.border}`,
+            borderRadius: 12,
+            cursor: "pointer",
+            fontFamily: F.family,
+            fontSize: 12,
+            fontWeight: value === c.id ? 600 : 400,
+            color: value === c.id ? "#fff" : T.textSub,
+            transition: "all .15s",
+          }}
+        >
+          <span style={{ fontSize: 22 }}>{c.icon}</span>
+          {c.label}
         </button>
       ))}
     </div>
   );
 
-  // Account toggle row
-  const AccGrid = ({value,onChange}) => (
-    <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
-      {accounts.map(a=>(
-        <button key={a.id} onClick={()=>onChange(a.id)}
-          style={{display:"flex",alignItems:"center",gap:6,padding:"9px 14px",background:value===a.id?a.color:T.surfaceUp,border:`2px solid ${value===a.id?a.color:T.border}`,borderRadius:12,cursor:"pointer",fontFamily:F.family,fontSize:12,fontWeight:value===a.id?600:400,color:value===a.id?"#fff":T.textSub,transition:"all .15s"}}>
-          <span style={{fontSize:22}}>{a.icon}</span>{a.name}
+  const AccGrid = ({ value, onChange }) => (
+    <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+      {accounts.map(a => (
+        <button
+          key={a.id}
+          onClick={() => onChange(a.id)}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+            padding: "9px 14px",
+            background: value === a.id ? a.color : T.surfaceUp,
+            border: `2px solid ${value === a.id ? a.color : T.border}`,
+            borderRadius: 12,
+            cursor: "pointer",
+            fontFamily: F.family,
+            fontSize: 12,
+            fontWeight: value === a.id ? 600 : 400,
+            color: value === a.id ? "#fff" : T.textSub,
+            transition: "all .15s",
+          }}
+        >
+          <span style={{ fontSize: 22 }}>{a.icon}</span>
+          {a.name}
         </button>
       ))}
     </div>
   );
+
+  return {
+    SL,
+    PrimaryBtn,
+    SolidBtn,
+    Tag,
+    IB,
+    SB,
+    Card,
+    BRow,
+    SectionRow,
+    CatGrid,
+    AccGrid,
+  };
+}, [
+  T,
+  F,
+  accent,
+  accentText,
+  categories,
+  accounts,
+]);
+
 
   // CSS injection
   const css = `
