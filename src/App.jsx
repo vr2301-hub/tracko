@@ -41,12 +41,12 @@ const DEFAULT_APPEARANCE = { themeId:"midnight", fontId:"jakarta", accentId:"emb
 
 const DEFAULT_CATEGORIES = [
   { id:"food",          label:"Food & Drink",   icon:"🍜", color:"#F0623A", isDefault:true },
-  { id:"transport",     label:"Transport",       icon:"🚇", color:"#2563EB", isDefault:true },
-  { id:"shopping",      label:"Shopping",        icon:"🛍️", color:"#7C3AED", isDefault:true },
-  { id:"health",        label:"Health",          icon:"💊", color:"#059669", isDefault:true },
-  { id:"entertainment", label:"Entertainment",   icon:"🎬", color:"#D97706", isDefault:true },
-  { id:"bills",         label:"Bills",           icon:"🧾", color:"#E11D48", isDefault:true },
-  { id:"other",         label:"Other",           icon:"📦", color:"#64748B", isDefault:true },
+  { id:"transport",     label:"Transport",      icon:"🚇", color:"#2563EB", isDefault:true },
+  { id:"shopping",      label:"Shopping",       icon:"🛍️", color:"#7C3AED", isDefault:true },
+  { id:"health",        label:"Health",         icon:"💊", color:"#059669", isDefault:true },
+  { id:"entertainment", label:"Entertainment",  icon:"🎬", color:"#D97706", isDefault:true },
+  { id:"bills",         label:"Bills",          icon:"🧾", color:"#E11D48", isDefault:true },
+  { id:"other",         label:"Other",          icon:"📦", color:"#64748B", isDefault:true },
 ];
 
 const CURRENCIES = [
@@ -74,9 +74,17 @@ const DEFAULT_ACCOUNTS = [
   { id:"touchngo", name:"TNG",     icon:"📱", color:"#2563EB" },
 ];
 
+const APP_VERSION = 1;
+
 const SK = {
-  expenses:"et-expenses", accounts:"et-accounts", recurring:"et-recurring",
-  currency:"et-currency", categories:"et-categories", budgets:"et-budgets", appearance:"et-appearance",
+  version:"et-version",
+  expenses:"et-expenses",
+  accounts:"et-accounts",
+  recurring:"et-recurring",
+  currency:"et-currency",
+  categories:"et-categories",
+  budgets:"et-budgets",
+  appearance:"et-appearance",
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -182,6 +190,10 @@ export default function ExpenseTracker() {
   const [filter,   setFilter]   = useState("all");
   const [deleteId, setDeleteId] = useState(null);
 
+  const [query, setQuery] = useState("");
+  const [selectedMonth, setSelectedMonth] = useState(thisMonthStr());
+  const [editingId, setEditingId] = useState(null);
+
   const blankForm    = () => ({ amount:"", note:"", category:categories[0]?.id??"food", date:todayStr(), accountId:"" });
   const blankAccount = () => ({ name:"", icon:"🏦", color:ACCOUNT_COLORS[0] });
   const blankRecur   = () => ({ name:"", amount:"", category:"bills", accountId:"", freq:"monthly", startDate:todayStr() });
@@ -203,6 +215,7 @@ export default function ExpenseTracker() {
     load(SK.budgets, v => { setBudgets(v); setBudgetDraft(v); });
     load(SK.appearance, v => { setAppearance(v); setAppDraft(v); });
     try { const s=localStorage.getItem(SK.currency); if(s) setCurrency(s); } catch {}
+    try { localStorage.setItem(SK.version, String(APP_VERSION)); } catch {}
   }, []);
 
   useEffect(()=>{ try{localStorage.setItem(SK.expenses,   JSON.stringify(expenses));}   catch{} },[expenses]);
@@ -222,11 +235,96 @@ export default function ExpenseTracker() {
   const accentText = A.text;
 
   // ── Actions ───────────────────────────────────────────────────────────────
-  function addExpense() {
-    if (!form.amount || isNaN(parseFloat(form.amount))) return;
-    setExpenses(prev => [{ id:Date.now(), amount:parseFloat(form.amount), note:form.note.trim()||categories.find(c=>c.id===form.category)?.label, category:form.category, date:form.date, accountId:form.accountId||(accounts[0]?.id??"") }, ...prev]);
-    setForm(blankForm()); setView("log");
+  function saveExpense() {
+    const amount = parseFloat(form.amount);
+  
+    if (!form.amount || isNaN(amount) || amount <= 0) return;
+  
+    const payload = {
+      amount,
+      note:
+        form.note.trim() ||
+        categories.find(c => c.id === form.category)?.label ||
+        "Expense",
+      category: form.category,
+      date: form.date,
+      accountId: form.accountId || accounts[0]?.id || "",
+    };
+  
+    if (editingId) {
+      setExpenses(prev =>
+        prev.map(e =>
+          e.id === editingId
+            ? {
+                ...e,
+                ...payload,
+              }
+            : e
+        )
+      );
+  
+      setEditingId(null);
+    } else {
+      setExpenses(prev => [
+        {
+          id:
+            typeof crypto !== "undefined" && crypto.randomUUID
+              ? crypto.randomUUID()
+              : String(Date.now()),
+          ...payload,
+        },
+        ...prev,
+      ]);
+    }
+  
+    setForm(blankForm());
+    setView("log");
   }
+
+  function startEditExpense(e) {
+    setEditingId(e.id);
+  
+    setForm({
+      amount: String(e.amount),
+      note: e.note || "",
+      category: e.category,
+      date: e.date,
+      accountId: e.accountId || accounts[0]?.id || "",
+    });
+  
+    setDeleteId(null);
+    setView("add");
+  }
+
+  function exportData() {
+    const data = {
+      appVersion: APP_VERSION,
+      expenses,
+      accounts,
+      recurring,
+      currency,
+      categories,
+      budgets,
+      appearance,
+      exportedAt: new Date().toISOString(),
+    };
+  
+    const blob = new Blob([JSON.stringify(data, null, 2)], {
+      type: "application/json",
+    });
+  
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+  
+    a.href = url;
+    a.download = `expense-tracker-backup-${todayStr()}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  
+    URL.revokeObjectURL(url);
+  }
+
   function addAccount() {
     if (!accForm.name.trim()) return;
     setAccounts(prev=>[...prev,{id:Date.now().toString(),...accForm,name:accForm.name.trim()}]);
@@ -252,10 +350,26 @@ export default function ExpenseTracker() {
   // ── Derived ───────────────────────────────────────────────────────────────
   const fmt        = n => fmtAmt(n, currency);
   const curSymbol  = CURRENCIES.find(c=>c.code===currency)?.symbol??"RM";
-  const filtered   = filter==="all" ? expenses : expenses.filter(e=>e.category===filter);
-  const grouped    = groupByDate(filtered);
-  const thisMonth  = thisMonthStr();
-  const monthExp   = expenses.filter(e=>e.date.startsWith(thisMonth));
+  const filtered = expenses.filter(e => {
+    const cat = categories.find(c => c.id === e.category);
+    const acc = accounts.find(a => a.id === e.accountId);
+  
+    const matchesCategory = filter === "all" || e.category === filter;
+  
+    const q = query.trim().toLowerCase();
+  
+    const matchesQuery =
+      !q ||
+      e.note?.toLowerCase().includes(q) ||
+      cat?.label?.toLowerCase().includes(q) ||
+      acc?.name?.toLowerCase().includes(q);
+  
+    return matchesCategory && matchesQuery;
+  });
+  
+  const grouped = groupByDate(filtered);
+  
+  const monthExp = expenses.filter(e => e.date.startsWith(selectedMonth));
   const monthTotal = monthExp.reduce((s,e)=>s+e.amount,0);
   const catTotals  = categories.map(c=>({...c,total:monthExp.filter(e=>e.category===c.id).reduce((s,e)=>s+e.amount,0)}));
   const catWithData= catTotals.filter(c=>c.total>0).sort((a,b)=>b.total-a.total);
@@ -367,8 +481,12 @@ export default function ExpenseTracker() {
     .num-input::-webkit-outer-spin-button,.num-input::-webkit-inner-spin-button{-webkit-appearance:none;}
     .entry-row{border-bottom:1px solid ${T.border};transition:background .12s;}
     .entry-row:hover{background:${T.surfaceUp};}
-    .del-btn{opacity:0;transition:opacity .2s;}
-    .entry-row:hover .del-btn{opacity:1;}
+    .del-btn{opacity:1;transition:opacity .2s;}
+
+    @media (hover:hover) {
+      .del-btn{opacity:0;}
+      .entry-row:hover .del-btn{opacity:1;}
+    }
     .add-fab{position:fixed;bottom:86px;right:calc(50% - 210px + 20px);width:56px;height:56px;border-radius:18px;background:${accent};border:none;cursor:pointer;font-size:28px;font-weight:300;display:flex;align-items:center;justify-content:center;color:${accentText};box-shadow:0 6px 24px ${hexAlpha(accent,.45)};transition:transform .15s,box-shadow .15s;z-index:10;}
     .add-fab:hover{transform:scale(1.07);box-shadow:0 8px 28px ${hexAlpha(accent,.6)};}
     .add-fab:active{transform:scale(.93);}
@@ -391,7 +509,7 @@ export default function ExpenseTracker() {
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
           <div>
             <div style={{fontSize:11,fontWeight:600,color:T.textMuted,textTransform:"uppercase",letterSpacing:2,marginBottom:6}}>
-              {new Date().toLocaleDateString("en-MY",{month:"long",year:"numeric"})}
+            {new Date(selectedMonth + "-01T00:00:00").toLocaleDateString("en-MY", { month: "long",year: "numeric",})}
             </div>
             <div style={{fontSize:34,fontWeight:F.weight,color:T.text,letterSpacing:-1,lineHeight:1}}>{fmt(monthTotal)}</div>
             {overallBudget>0&&(
@@ -418,23 +536,19 @@ export default function ExpenseTracker() {
         </div>
       </div>
 
-      {/* ── TAB NAV ─────────────────────────────────────────── */}
-      <div style={{display:"flex",background:T.surface,borderBottom:`1px solid ${T.border}`,padding:"0 8px"}}>
-        {[["log","Log"],["summary","Summary"],["settings","Settings"]].map(([id,lbl])=>(
-          <button key={id} className="nav-btn press" onClick={()=>setView(id)}
-            style={{flex:1,padding:"12px 8px",fontSize:12,fontWeight:600,color:view===id?accent:T.textMuted,borderBottom:view===id?`2.5px solid ${accent}`:"2.5px solid transparent",background:"none",border:"none",borderBottom:view===id?`2.5px solid ${accent}`:"2.5px solid transparent",cursor:"pointer",fontFamily:F.family,letterSpacing:0.3}}>
-            {lbl}
-          </button>
-        ))}
-      </div>
-
       {/* ══════════════════════════════════════════════════════════
           ADD EXPENSE
       ══════════════════════════════════════════════════════════ */}
       {view==="add"&&(
         <div className="fade-in" style={{flex:1,overflowY:"auto",padding:20}}>
-          <BRow label="Add Expense" onBack={()=>setView("log")}/>
-
+        <BRow
+          label={editingId ? "Edit Expense" : "Add Expense"}
+          onBack={() => {
+            setEditingId(null);
+            setForm(blankForm());
+            setView("log");
+          }}
+        />
           {/* Amount card */}
           <Card style={{marginBottom:16,textAlign:"center",padding:"24px 20px"}}>
             <div style={{fontSize:11,fontWeight:600,color:T.textMuted,letterSpacing:2,textTransform:"uppercase",marginBottom:12}}>Amount</div>
@@ -442,10 +556,37 @@ export default function ExpenseTracker() {
               <span style={{fontSize:28,fontWeight:F.weight,color:T.textMuted}}>{curSymbol}</span>
               <input ref={amountRef} type="number" className="num-input" placeholder="0.00" value={form.amount}
                 onChange={e=>setForm(f=>({...f,amount:e.target.value}))}
-                onKeyDown={e=>e.key==="Enter"&&addExpense()}
+                onKeyDown={e=>e.key==="Enter"&&saveExpense()}
                 style={{background:"none",border:"none",fontSize:44,width:180,color:form.amount?accent:T.textMuted,fontWeight:F.weight,textAlign:"center",fontFamily:F.family}}/>
             </div>
             <div style={{height:2,background:form.amount?accent:T.border,maxWidth:180,margin:"8px auto 0",borderRadius:1,transition:"background .2s"}}/>
+            <div style={{
+                          display:"flex",
+                          gap:8,
+                          justifyContent:"center",
+                          marginTop:16,
+                          flexWrap:"wrap",
+                        }}>
+                          {[5, 10, 20, 50, 100].map(v => (
+                            <button
+                              key={v}
+                              onClick={() => setForm(f => ({ ...f, amount: String(v) }))}
+                              style={{
+                                background:T.surfaceUp,
+                                border:`1px solid ${T.border}`,
+                                borderRadius:10,
+                                color:T.textSub,
+                                padding:"7px 12px",
+                                fontSize:12,
+                                fontWeight:600,
+                                cursor:"pointer",
+                                fontFamily:F.family,
+                              }}
+                            >
+                              {curSymbol}{v}
+                            </button>
+                          ))}
+              </div>
           </Card>
 
           {/* Account */}
@@ -465,7 +606,7 @@ export default function ExpenseTracker() {
             <SL>Note</SL>
             <IB type="text" placeholder="What was this for?" value={form.note}
               onChange={e=>setForm(f=>({...f,note:e.target.value}))}
-              onKeyDown={e=>e.key==="Enter"&&addExpense()}/>
+              onKeyDown={e=>e.key==="Enter"&&saveExpense()}          
           </div>
 
           {/* Date */}
@@ -474,7 +615,12 @@ export default function ExpenseTracker() {
             <IB type="date" value={form.date} onChange={e=>setForm(f=>({...f,date:e.target.value}))} style={{colorScheme:T.dark?"dark":"light"}}/>
           </div>
 
-          <PrimaryBtn label="Add Expense" onClick={addExpense} disabled={!form.amount} icon="＋"/>
+          <PrimaryBtn
+              label={editingId ? "Save Changes" : "Add Expense"}
+              onClick={saveExpense}
+              disabled={!form.amount || parseFloat(form.amount) <= 0}
+              icon={editingId ? "✓" : "＋"}
+            />          
           <div style={{height:40}}/>
         </div>
       )}
@@ -484,6 +630,18 @@ export default function ExpenseTracker() {
       ══════════════════════════════════════════════════════════ */}
       {view==="log"&&(
         <div className="fade-in" style={{flex:1,overflowY:"auto"}}>
+                    <div style={{
+            padding:"12px 16px",
+            background:T.surface,
+            borderBottom:`1px solid ${T.border}`,
+          }}>
+            <IB
+              type="search"
+              placeholder="Search expenses, categories, accounts..."
+              value={query}
+              onChange={e => setQuery(e.target.value)}
+            />
+          </div>
           {/* Filter bar */}
           <div style={{padding:"12px 16px",display:"flex",gap:8,overflowX:"auto",background:T.surface,borderBottom:`1px solid ${T.border}`}}>
             <Tag active={filter==="all"} color={accent} onClick={()=>setFilter("all")}>All</Tag>
@@ -498,8 +656,14 @@ export default function ExpenseTracker() {
           {filtered.length===0?(
             <div style={{textAlign:"center",padding:"60px 20px",color:T.textMuted}}>
               <div style={{fontSize:40,marginBottom:12}}>📋</div>
-              <div style={{fontSize:14,fontWeight:500}}>No expenses yet</div>
-              <div style={{fontSize:12,marginTop:4}}>Tap + to add your first one</div>
+              <div style={{fontSize:14,fontWeight:500}}>
+                  {query || filter !== "all" ? "No matching expenses" : "No expenses yet"}
+                </div>
+                <div style={{fontSize:12,marginTop:4}}>
+                  {query || filter !== "all"
+                    ? "Try changing your search or filter"
+                    : "Tap + to add your first one"}
+                </div>
             </div>
           ):grouped.map(([date,entries])=>(
             <div key={date}>
@@ -526,15 +690,78 @@ export default function ExpenseTracker() {
                     </div>
                     <div style={{fontSize:15,fontWeight:700,color:T.text,flexShrink:0}}>{fmt(e.amount)}</div>
                     {deleteId===e.id?(
-                      <div style={{display:"flex",gap:6,flexShrink:0}}>
-                        <button onClick={()=>{setExpenses(prev=>prev.filter(x=>x.id!==e.id));setDeleteId(null);}}
-                          style={{background:"#E11D48",border:"none",borderRadius:8,padding:"6px 10px",color:"#fff",fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:F.family}}>Delete</button>
-                        <button onClick={()=>setDeleteId(null)}
-                          style={{background:T.surfaceUp,border:"none",borderRadius:8,padding:"6px 10px",color:T.text,fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:F.family}}>Cancel</button>
-                      </div>
-                    ):(
-                      <button className="del-btn" onClick={()=>setDeleteId(e.id)}
-                        style={{background:"none",border:"none",cursor:"pointer",color:T.textMuted,fontSize:18,padding:"0 2px",flexShrink:0}}>⋯</button>
+                                      <div style={{display:"flex",gap:6,flexShrink:0}}>
+                                        <button
+                                          onClick={() => startEditExpense(e)}
+                                          style={{
+                                            background:T.surfaceUp,
+                                            border:"none",
+                                            borderRadius:8,
+                                            padding:"6px 10px",
+                                            color:T.text,
+                                            fontSize:11,
+                                            fontWeight:600,
+                                            cursor:"pointer",
+                                            fontFamily:F.family,
+                                          }}
+                                        >
+                                          Edit
+                                        </button>
+
+                                        <button
+                                          onClick={() => {
+                                            setExpenses(prev => prev.filter(x => x.id !== e.id));
+                                            setDeleteId(null);
+                                          }}
+                                          style={{
+                                            background:"#E11D48",
+                                            border:"none",
+                                            borderRadius:8,
+                                            padding:"6px 10px",
+                                            color:"#fff",
+                                            fontSize:11,
+                                            fontWeight:600,
+                                            cursor:"pointer",
+                                            fontFamily:F.family,
+                                          }}
+                                        >
+                                          Delete
+                                        </button>
+
+                                        <button
+                                          onClick={() => setDeleteId(null)}
+                                          style={{
+                                            background:T.surfaceUp,
+                                            border:"none",
+                                            borderRadius:8,
+                                            padding:"6px 10px",
+                                            color:T.text,
+                                            fontSize:11,
+                                            fontWeight:600,
+                                            cursor:"pointer",
+                                            fontFamily:F.family,
+                                          }}
+                                        >
+                                          Cancel
+                                        </button>
+                                      </div>
+                                    ):(
+                                      <buttonw
+                                        className="del-btn"
+                                        onClick={() => setDeleteId(e.id)}
+                                        style={{
+                                          background:"none",
+                                          border:"none",
+                                          cursor:"pointer",
+                                          color:T.textMuted,
+                                          fontSize:18,
+                                          padding:"0 2px",
+                                          flexShrink:0,
+                                        }}
+                                      >
+                                        ⋯
+                                      </button>
+                                    )}
                     )}
                   </div>
                 );
@@ -550,6 +777,16 @@ export default function ExpenseTracker() {
       ══════════════════════════════════════════════════════════ */}
       {view==="summary"&&(
         <div className="fade-in" style={{flex:1,overflowY:"auto",padding:20}}>
+
+        <Card style={{marginBottom:16}}>
+          <SL>Month</SL>
+          <IB
+            type="month"
+            value={selectedMonth}
+            onChange={e => setSelectedMonth(e.target.value)}
+            style={{colorScheme:T.dark?"dark":"light"}}
+          />
+        </Card>
 
           {/* Pie chart card */}
           <Card style={{marginBottom:20}}>
@@ -655,6 +892,38 @@ export default function ExpenseTracker() {
             <SB value={currency} onChange={e=>setCurrency(e.target.value)}>{CURRENCIES.map(c=><option key={c.code} value={c.code}>{c.code} — {c.label}</option>)}</SB>
           </Card>
 
+          <Card style={{marginBottom:16}}>
+  <SectionRow
+    label="Backup"
+    action="Export"
+    onAction={exportData}
+  />
+
+  <div style={{
+    background:T.surfaceUp,
+    borderRadius:12,
+    padding:"12px 14px",
+  }}>
+    <div style={{
+      fontSize:13,
+      fontWeight:600,
+      color:T.text,
+      marginBottom:4,
+    }}>
+      Export your data
+    </div>
+
+    <div style={{
+      fontSize:11,
+      color:T.textMuted,
+      lineHeight:1.5,
+    }}>
+      Download a JSON backup containing expenses, accounts, categories,
+      recurring expenses, budgets, currency, and appearance settings.
+    </div>
+  </div>
+</Card>
+                   
           {/* Appearance */}
           <Card style={{marginBottom:16}}>
             <SectionRow label="Appearance" action="Customise" onAction={()=>{setAppDraft(appearance);setView("appearance");}}/>
@@ -793,7 +1062,7 @@ export default function ExpenseTracker() {
                 <button key={t.id} onClick={()=>setAppDraft(d=>({...d,themeId:t.id}))}
                   style={{display:"flex",flexDirection:"column",alignItems:"center",gap:6,background:appDraft.themeId===t.id?hexAlpha(accent,.15):T.surfaceUp,border:`2px solid ${appDraft.themeId===t.id?accent:T.border}`,borderRadius:12,padding:"10px 6px",cursor:"pointer",transition:"all .15s"}}>
                   <div style={{width:36,height:28,borderRadius:8,background:t.bg,border:`1px solid ${t.border}`,display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden"}}>
-                    <div style={{width:18,height:12,borderRadius:4,background:t.surface,border:`1px solid ${t.borderAlt}`}}/>
+                    <div style={{width:18,height:12,borderRadius:4,background:t.surface,border:`1px solid ${t.border}`}}/>
                   </div>
                   <span style={{fontSize:10,fontWeight:600,color:appDraft.themeId===t.id?accent:T.textMuted}}>{t.label}</span>
                   <span style={{fontSize:9,color:T.textMuted,background:T.border,padding:"1px 5px",borderRadius:4}}>{t.dark?"Dark":"Light"}</span>
@@ -934,8 +1203,19 @@ export default function ExpenseTracker() {
 
       {/* ── FAB ───────────────────────────────────────────────── */}
       {["log","summary","settings"].includes(view)&&(
-        <button className="add-fab" onClick={()=>{setForm(blankForm());setView("add");}}>+</button>
-      )}
+        <button
+                className="add-fab"
+                onClick={() => {
+                  setEditingId(null);
+                  setForm(blankForm());
+                  setView("add");
+                }}
+              >
+                +
+        </button>
+
+
+)}
 
       {/* ── BOTTOM NAV ────────────────────────────────────────── */}
       <div style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:420,background:T.surface,borderTop:`1px solid ${T.border}`,padding:"10px 0 18px",display:"flex",justifyContent:"space-around",zIndex:9}}>
